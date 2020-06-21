@@ -1,4 +1,4 @@
-use crate::schema::*;
+//use crate::schema::*;
 
 #[derive(Serialize, Deserialize, Queryable)]
 pub struct Quiz {
