@@ -1,0 +1,2 @@
+[global.databases]
+quizzes_db = { url = "mysql://rocket:password@localhost/quizzes_db" }

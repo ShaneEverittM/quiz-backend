@@ -1,0 +1,1 @@
+CREATE TABLE quizzes (name VARCHAR(25) PRIMARY KEY)
