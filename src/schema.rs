@@ -1,5 +1,7 @@
 table! {
-    quizzes (name) {
+    quizzes (id) {
         name -> Varchar,
+        num_questions -> Integer,
+        id -> Integer,
     }
 }

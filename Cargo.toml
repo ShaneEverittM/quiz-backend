@@ -9,7 +9,7 @@ edition = "2018"
 [dependencies]
 
 # For connecting with the MySQL database
-diesel = { version = "1.4.2", features = ["chrono"] }
+diesel ="1.4.2"   
 
 
 # Rocket Webserver
