@@ -27,7 +27,7 @@ pub struct DbConn(diesel::MysqlConnection);
 
 fn main() {
     rocket::ignite()
-        .mount("/", routes![routes::index])
+        .mount("/", routes![routes::index, routes::get_quiz])
         .attach(DbConn::fairing())
         .attach(CorsOptions::default().to_cors().unwrap())
         .launch();
