@@ -1,16 +1,24 @@
-use diesel::{self, prelude::*};
-use rocket::response::status::NotFound;
+use diesel::{self, insert_into, prelude::*};
+
+use rocket::request::Form;
+use rocket::response::status::{Conflict, NotFound};
 use rocket_contrib::json::Json; //Easy Json coercion
 
 use crate::models::*; //Models needed for pulling or pushing data
 use crate::DbConn; // The state managed DB connection
 
 // use diesel::debug_query;
-#[derive(Serialize)]
+#[derive(Serialize, Deserialize, Debug)]
 pub struct FullQuiz {
     quiz: Quiz,
     questions: Vec<Question>,
     answers: Vec<Vec<Answer>>,
+}
+#[derive(Serialize, Deserialize, Debug)]
+pub struct NewFullQuiz {
+    quiz: NewQuiz,
+    questions: Vec<IncomingQuestion>,
+    answers: Vec<Vec<IncomingAnswer>>,
 }
 
 #[get("/")]
@@ -54,6 +62,59 @@ pub fn get_quiz(target_id: i32, conn_ptr: DbConn) -> Result<Json<FullQuiz>, NotF
     Ok(Json(full_quiz))
 }
 
+no_arg_sql_function!(
+    last_insert_id,
+    diesel::sql_types::Unsigned<diesel::sql_types::BigInt>
+);
+
+#[post("/quiz", format = "json", data = "<f_quiz>")]
+pub fn insert_quiz(
+    f_quiz: Json<NewFullQuiz>,
+    conn_ptr: DbConn,
+) -> Result<String, Conflict<String>> {
+    use crate::schema::answer::dsl::answer;
+    use crate::schema::question::dsl::question;
+    use crate::schema::quiz::dsl::quiz;
+    let ref conn = *conn_ptr;
+
+    let f_quiz_struct = f_quiz.into_inner();
+    let q = f_quiz_struct.quiz;
+
+    let _ = insert_into(quiz)
+        .values(q)
+        .execute(conn)
+        .map_err(|msg| Conflict(Some(msg.to_string())))?;
+
+    let last_qz_id: u64 = diesel::select(last_insert_id)
+        .first(conn)
+        .map_err(|msg| Conflict(Some(msg.to_string())))?;
+    let cur_question = 0;
+    for qs in &f_quiz_struct.questions {
+        let question_to_add = NewQuestion {
+            description: qs.description.clone(),
+            qz_id: last_qz_id as i32,
+        };
+        let _ = insert_into(question)
+            .values(question_to_add)
+            .execute(conn)
+            .map_err(|msg| Conflict(Some(msg.to_string())))?;
+        let last_q_id: u64 = diesel::select(last_insert_id)
+            .first(conn)
+            .map_err(|msg| Conflict(Some(msg.to_string())))?;
+        for ans in &f_quiz_struct.answers[cur_question] {
+            let answer_to_add = NewAnswer {
+                description: ans.description.clone(),
+                val: ans.val,
+                q_id: last_q_id as i32,
+            };
+            let _ = insert_into(answer)
+                .values(answer_to_add)
+                .execute(conn)
+                .map_err(|msg| Conflict(Some(msg.to_string())))?;
+        }
+    }
+    Ok("Inserted".into())
+}
 // let insert_query = insert_into(quiz).values(name.eq("Test5"));
 // match insert_query.execute(conn) {
 //     Ok(rows_changed) => println!("{} rows changed", rows_changed),
