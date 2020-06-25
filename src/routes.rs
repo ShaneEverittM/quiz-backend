@@ -1,6 +1,5 @@
 use diesel::{self, insert_into, prelude::*};
 
-use rocket::request::Form;
 use rocket::response::status::{Conflict, NotFound};
 use rocket_contrib::json::Json; //Easy Json coercion
 
