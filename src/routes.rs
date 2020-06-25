@@ -87,7 +87,7 @@ pub fn insert_quiz(
     let last_qz_id: u64 = diesel::select(last_insert_id)
         .first(conn)
         .map_err(|msg| Conflict(Some(msg.to_string())))?;
-    let cur_question = 0;
+    let mut cur_question = 0;
     for qs in &f_quiz_struct.questions {
         let question_to_add = NewQuestion {
             description: qs.description.clone(),
@@ -110,6 +110,7 @@ pub fn insert_quiz(
                 .values(answer_to_add)
                 .execute(conn)
                 .map_err(|msg| Conflict(Some(msg.to_string())))?;
+            cur_question += 1;
         }
     }
     Ok("Inserted".into())
