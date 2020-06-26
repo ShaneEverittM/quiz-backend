@@ -14,7 +14,6 @@ pub struct FullQuiz {
     questions: Vec<Question>,
     answers: Vec<Vec<Answer>>,
 }
-
 //Aggregate struct to represent an entire incoming quiz to be processed before going into the db.
 #[derive(Serialize, Deserialize, Debug)]
 pub struct NewFullQuiz {
