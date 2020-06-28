@@ -48,3 +48,25 @@ pub struct NewQuiz {
     pub name: String,
     pub num_questions: i32,
 }
+#[derive(Serialize, Deserialize, Queryable, Debug)]
+pub struct QuizResult {
+    pub id: i32,
+    pub num: i32,
+    pub header: String,
+    pub description: String,
+    pub qz_id: i32,
+}
+#[derive(Serialize, Deserialize, Insertable, Debug)]
+#[table_name = "result"]
+pub struct NewQuizResult {
+    pub num: i32,
+    pub header: String,
+    pub description: String,
+    pub qz_id: i32,
+}
+#[derive(Serialize, Deserialize, Debug)]
+pub struct IncomingQuizResult {
+    pub num: i32,
+    pub header: String,
+    pub description: String,
+}

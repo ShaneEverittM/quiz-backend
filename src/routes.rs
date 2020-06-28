@@ -13,6 +13,7 @@ pub struct FullQuiz {
     quiz: Quiz,
     questions: Vec<Question>,
     answers: Vec<Vec<Answer>>,
+    results: Vec<QuizResult>,
 }
 //Aggregate struct to represent an entire incoming quiz to be processed before going into the db.
 #[derive(Serialize, Deserialize, Debug)]
@@ -20,6 +21,7 @@ pub struct NewFullQuiz {
     quiz: NewQuiz,
     questions: Vec<IncomingQuestion>,
     answers: Vec<Vec<IncomingAnswer>>,
+    results: Vec<IncomingQuizResult>,
 }
 // Test route.
 #[get("/")]
@@ -33,37 +35,65 @@ pub fn index(conn_ptr: DbConn) -> Result<Json<Vec<Quiz>>, String> {
 }
 // This route handles retrieval of all of the constituant parts of a quiz from their
 // tables and assembles them into a large struct and sends it as JSON.
-#[get("/quiz/<target_id>")]
-pub fn get_quiz(target_id: i32, conn_ptr: DbConn) -> Result<Json<FullQuiz>, NotFound<String>> {
-    use crate::schema::answer::dsl::{answer, q_id};
-    use crate::schema::question::dsl::{question, qz_id};
-    use crate::schema::quiz::dsl::quiz;
-    let ref conn = *conn_ptr;
-    let qz = quiz
-        .find(target_id)
+#[get("/quiz/<quiz_id>")]
+pub fn get_full_quiz(quiz_id: i32, conn_ptr: DbConn) -> Result<Json<FullQuiz>, NotFound<String>> {
+    let quiz = get_quiz(quiz_id, &*conn_ptr)?;
+    let questions = get_questions(quiz_id, &*conn_ptr)?;
+    let answers = get_answers(&questions, &*conn_ptr)?;
+    let results = get_results(quiz_id, &*conn_ptr)?;
+    Ok(Json(FullQuiz {
+        quiz,
+        questions,
+        answers,
+        results,
+    }))
+}
+
+fn get_quiz(quiz_id: i32, conn: &diesel::MysqlConnection) -> Result<Quiz, NotFound<String>> {
+    use crate::schema::quiz::dsl::quiz as quiz_table;
+    Ok(quiz_table
+        .find(quiz_id)
         .first::<Quiz>(conn)
-        .map_err(|msg| NotFound(msg.to_string()))?;
-    let questions = question
-        .filter(qz_id.eq(target_id))
+        .map_err(|msg| NotFound(msg.to_string()))?)
+}
+
+fn get_questions(
+    quiz_id: i32,
+    conn: &diesel::MysqlConnection,
+) -> Result<Vec<Question>, NotFound<String>> {
+    use crate::schema::question::dsl::{question as question_table, qz_id};
+    Ok(question_table
+        .filter(qz_id.eq(quiz_id))
         .load::<Question>(conn)
-        .map_err(|msg| NotFound(msg.to_string()))?;
+        .map_err(|msg| NotFound(msg.to_string()))?)
+}
+
+fn get_answers(
+    questions: &Vec<Question>,
+    conn: &diesel::MysqlConnection,
+) -> Result<Vec<Vec<Answer>>, NotFound<String>> {
+    use crate::schema::answer::dsl::{answer as answer_table, q_id};
     let mut answers: Vec<Vec<Answer>> = Vec::new();
-    for cur_question in &questions {
-        let inner_answers = answer
+    for cur_question in questions {
+        let inner_answers = answer_table
             .filter(q_id.eq(cur_question.id))
             .load::<Answer>(conn)
             .map_err(|msg| NotFound(msg.to_string()))?;
         answers.push(inner_answers);
     }
-
-    let full_quiz = FullQuiz {
-        quiz: qz,
-        questions,
-        answers,
-    };
-    Ok(Json(full_quiz))
+    Ok(answers)
 }
 
+fn get_results(
+    quiz_id: i32,
+    conn: &diesel::MysqlConnection,
+) -> Result<Vec<QuizResult>, NotFound<String>> {
+    use crate::schema::result::dsl::{qz_id, result as result_table};
+    Ok(result_table
+        .filter(qz_id.eq(quiz_id))
+        .load::<QuizResult>(conn)
+        .map_err(|msg| NotFound(msg.to_string()))?)
+}
 no_arg_sql_function!(
     last_insert_id,
     diesel::sql_types::Unsigned<diesel::sql_types::BigInt>
@@ -79,6 +109,7 @@ pub fn insert_quiz(
     use crate::schema::answer::dsl::answer;
     use crate::schema::question::dsl::question;
     use crate::schema::quiz::dsl::quiz;
+    use crate::schema::result::dsl::result;
     let ref conn = *conn_ptr;
 
     let f_quiz_struct = f_quiz.into_inner();
@@ -117,14 +148,19 @@ pub fn insert_quiz(
             cur_question += 1;
         }
     }
+    let results = f_quiz_struct.results;
+    let new_results: Vec<NewQuizResult> = results
+        .iter()
+        .map(|q| NewQuizResult {
+            num: q.num,
+            header: q.header.clone(),
+            description: q.description.clone(),
+            qz_id: last_qz_id as i32,
+        })
+        .collect();
+    insert_into(result)
+        .values(new_results)
+        .execute(conn)
+        .map_err(|msg| Conflict(Some(msg.to_string())))?;
     Ok("Inserted".into())
 }
-// let insert_query = insert_into(quiz).values(name.eq("Test5"));
-// match insert_query.execute(conn) {
-//     Ok(rows_changed) => println!("{} rows changed", rows_changed),
-//     Err(msg) => println!(
-//         "Query: {} \n failed with error: {}",
-//         debug_query::<diesel::mysql::Mysql, _>(&insert_query),
-//         msg
-//     ),
-// }
