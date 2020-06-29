@@ -1,8 +1,7 @@
-use diesel::{self, insert_into, prelude::*};
+use diesel::{self, prelude::*}; //common diesel things
 
-use rocket::response::status::{Conflict, NotFound};
+use rocket::response::status::{Conflict, NotFound}; // Response types
 use rocket_contrib::json::Json; // Easy Json coercion
-                                // use diesel::debug_query;
 
 use crate::models::*; // Models needed for pulling or pushing data
 use crate::DbConn; // The state managed DB connection
@@ -37,6 +36,7 @@ pub fn index(conn_ptr: DbConn) -> Result<Json<Vec<Quiz>>, String> {
 // tables and assembles them into a large struct and sends it as JSON.
 #[get("/quiz/<quiz_id>")]
 pub fn get_full_quiz(quiz_id: i32, conn_ptr: DbConn) -> Result<Json<FullQuiz>, NotFound<String>> {
+    // Could do some of these concurrently
     let quiz = get_quiz(quiz_id, &*conn_ptr)?;
     let questions = get_questions(quiz_id, &*conn_ptr)?;
     let answers = get_answers(&questions, &*conn_ptr)?;
@@ -94,6 +94,10 @@ fn get_results(
         .load::<QuizResult>(conn)
         .map_err(|msg| NotFound(msg.to_string()))?)
 }
+
+// no_arg_sql_function!(function_name, return_type)
+// Generates a FFI of a specific signatyre for db_name.function_name()
+// In this case its quizzes_db.last_insert_id() -> sql::BigInt
 no_arg_sql_function!(
     last_insert_id,
     diesel::sql_types::Unsigned<diesel::sql_types::BigInt>
@@ -115,7 +119,7 @@ pub fn insert_quiz(
     let f_quiz_struct = f_quiz.into_inner();
     let q = f_quiz_struct.quiz;
 
-    let _ = insert_into(quiz)
+    let _rows_changed = diesel::insert_into(quiz)
         .values(q)
         .execute(conn)
         .map_err(|msg| Conflict(Some(msg.to_string())))?;
@@ -128,7 +132,7 @@ pub fn insert_quiz(
             description: qs.description.clone(),
             qz_id: last_qz_id as i32,
         };
-        let _ = insert_into(question)
+        let _row_changed = diesel::insert_into(question)
             .values(question_to_add)
             .execute(conn)
             .map_err(|msg| Conflict(Some(msg.to_string())))?;
@@ -141,7 +145,7 @@ pub fn insert_quiz(
                 val: ans.val,
                 q_id: last_q_id as i32,
             };
-            let _ = insert_into(answer)
+            let _rows_changed = diesel::insert_into(answer)
                 .values(answer_to_add)
                 .execute(conn)
                 .map_err(|msg| Conflict(Some(msg.to_string())))?;
@@ -158,7 +162,7 @@ pub fn insert_quiz(
             qz_id: last_qz_id as i32,
         })
         .collect();
-    insert_into(result)
+    diesel::insert_into(result)
         .values(new_results)
         .execute(conn)
         .map_err(|msg| Conflict(Some(msg.to_string())))?;
