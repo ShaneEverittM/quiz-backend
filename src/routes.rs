@@ -7,21 +7,44 @@ use crate::models::*; // Models needed for pulling or pushing data
 use crate::DbConn; // The state managed DB connection
 
 // Aggregate struct to represent an entire quiz coming out of the db.
-#[derive(Serialize, Deserialize, Debug)]
+#[derive(Serialize, Debug)]
 pub struct FullQuiz {
     quiz: Quiz,
     questions: Vec<Question>,
     answers: Vec<Vec<Answer>>,
     results: Vec<QuizResult>,
 }
+
 //Aggregate struct to represent an entire incoming quiz to be processed before going into the db.
-#[derive(Serialize, Deserialize, Debug)]
-pub struct NewFullQuiz {
-    quiz: NewQuiz,
+#[derive(Deserialize, Debug)]
+pub struct IncomingFullQuiz {
+    quiz: IncomingQuiz,
     questions: Vec<IncomingQuestion>,
     answers: Vec<Vec<IncomingAnswer>>,
     results: Vec<IncomingQuizResult>,
 }
+
+#[derive(Deserialize, Debug)]
+pub struct IncomingAnswer {
+    pub description: String,
+    pub val: i32,
+}
+
+#[derive(Deserialize, Debug)]
+pub struct IncomingQuestion {
+    pub description: String,
+}
+
+//for readability in routes
+pub type IncomingQuiz = NewQuiz;
+
+#[derive(Deserialize, Debug)]
+pub struct IncomingQuizResult {
+    pub num: i32,
+    pub header: String,
+    pub description: String,
+}
+
 // Test route.
 #[get("/")]
 pub fn index(conn_ptr: DbConn) -> Result<Json<Vec<Quiz>>, String> {
@@ -32,6 +55,7 @@ pub fn index(conn_ptr: DbConn) -> Result<Json<Vec<Quiz>>, String> {
         Err(msg) => Err(format!("Error loading quiz: {}", msg).into()),
     }
 }
+
 // This route handles retrieval of all of the constituant parts of a quiz from their
 // tables and assembles them into a large struct and sends it as JSON.
 #[get("/quiz/<quiz_id>")]
@@ -103,11 +127,10 @@ no_arg_sql_function!(
     diesel::sql_types::Unsigned<diesel::sql_types::BigInt>
 );
 // This route handles adding new quizzes to the db. Takes a large amount of data in the body
-// and deserializes it as well as destructuring it into its fields for insertion into their
-// respective tables.
+// and destructures it into its fields for insertion into their respective tables.
 #[post("/quiz", format = "json", data = "<f_quiz>")]
 pub fn insert_quiz(
-    f_quiz: Json<NewFullQuiz>,
+    f_quiz: Json<IncomingFullQuiz>,
     conn_ptr: DbConn,
 ) -> Result<String, Conflict<String>> {
     use crate::schema::answer::dsl::answer;
