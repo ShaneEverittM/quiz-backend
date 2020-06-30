@@ -15,34 +15,13 @@ pub struct FullQuiz {
     results: Vec<QuizResult>,
 }
 
-//Aggregate struct to represent an entire incoming quiz to be processed before going into the db.
+// Aggregate struct to represent an entire incoming quiz to be processed before going into the db.
 #[derive(Deserialize, Debug)]
 pub struct IncomingFullQuiz {
     quiz: IncomingQuiz,
     questions: Vec<IncomingQuestion>,
     answers: Vec<Vec<IncomingAnswer>>,
     results: Vec<IncomingQuizResult>,
-}
-
-#[derive(Deserialize, Debug)]
-pub struct IncomingAnswer {
-    pub description: String,
-    pub val: i32,
-}
-
-#[derive(Deserialize, Debug)]
-pub struct IncomingQuestion {
-    pub description: String,
-}
-
-//for readability in routes
-pub type IncomingQuiz = NewQuiz;
-
-#[derive(Deserialize, Debug)]
-pub struct IncomingQuizResult {
-    pub num: i32,
-    pub header: String,
-    pub description: String,
 }
 
 // Test route.
@@ -120,7 +99,7 @@ fn get_results(
 }
 
 // no_arg_sql_function!(function_name, return_type)
-// Generates a FFI of a specific signatyre for db_name.function_name()
+// Generates a FFI of a specific signature for db_name.function_name()
 // In this case its quizzes_db.last_insert_id() -> sql::BigInt
 no_arg_sql_function!(
     last_insert_id,
@@ -133,49 +112,53 @@ pub fn insert_quiz(
     f_quiz: Json<IncomingFullQuiz>,
     conn_ptr: DbConn,
 ) -> Result<String, Conflict<String>> {
-    use crate::schema::answer::dsl::answer;
-    use crate::schema::question::dsl::question;
-    use crate::schema::quiz::dsl::quiz;
-    use crate::schema::result::dsl::result;
+    use crate::schema::answer::dsl::answer as answer_table;
+    use crate::schema::question::dsl::question as question_table;
+    use crate::schema::quiz::dsl::quiz as quiz_table;
+    use crate::schema::result::dsl::result as result_table;
     let ref conn = *conn_ptr;
 
-    let f_quiz_struct = f_quiz.into_inner();
-    let q = f_quiz_struct.quiz;
+    let IncomingFullQuiz {
+        quiz,
+        questions,
+        answers,
+        results,
+    } = f_quiz.into_inner();
 
-    let _rows_changed = diesel::insert_into(quiz)
-        .values(q)
+    let _rows_changed = diesel::insert_into(quiz_table)
+        .values(NewQuiz::from(quiz))
         .execute(conn)
         .map_err(|msg| Conflict(Some(msg.to_string())))?;
     let last_qz_id: u64 = diesel::select(last_insert_id)
         .first(conn)
         .map_err(|msg| Conflict(Some(msg.to_string())))?;
     let mut cur_question = 0;
-    for qs in &f_quiz_struct.questions {
+    for qs in questions {
         let question_to_add = NewQuestion {
             description: qs.description.clone(),
             qz_id: last_qz_id as i32,
         };
-        let _row_changed = diesel::insert_into(question)
+        let _row_changed = diesel::insert_into(question_table)
             .values(question_to_add)
             .execute(conn)
             .map_err(|msg| Conflict(Some(msg.to_string())))?;
         let last_q_id: u64 = diesel::select(last_insert_id)
             .first(conn)
             .map_err(|msg| Conflict(Some(msg.to_string())))?;
-        for ans in &f_quiz_struct.answers[cur_question] {
+        for ans in &answers[cur_question] {
             let answer_to_add = NewAnswer {
                 description: ans.description.clone(),
                 val: ans.val,
                 q_id: last_q_id as i32,
             };
-            let _rows_changed = diesel::insert_into(answer)
+            let _rows_changed = diesel::insert_into(answer_table)
                 .values(answer_to_add)
                 .execute(conn)
                 .map_err(|msg| Conflict(Some(msg.to_string())))?;
             cur_question += 1;
         }
     }
-    let results = f_quiz_struct.results;
+
     let new_results: Vec<NewQuizResult> = results
         .iter()
         .map(|q| NewQuizResult {
@@ -185,7 +168,7 @@ pub fn insert_quiz(
             qz_id: last_qz_id as i32,
         })
         .collect();
-    diesel::insert_into(result)
+    diesel::insert_into(result_table)
         .values(new_results)
         .execute(conn)
         .map_err(|msg| Conflict(Some(msg.to_string())))?;

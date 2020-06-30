@@ -7,16 +7,18 @@ extern crate diesel; // ORM and query builder
 extern crate rocket; // framework
 
 #[macro_use]
-extern crate rocket_contrib;
+extern crate rocket_contrib; // useful community libraries
 
+// Because everyone needs serde
 extern crate serde;
 extern crate serde_json;
 
 #[macro_use]
-extern crate serde_derive;
+extern crate serde_derive; // to be able to derive
 
-use rocket_cors::CorsOptions;
+use rocket_cors::CorsOptions; // must appease our CORS overlords
 
+// apparently this is how you declare modules, at the crate root
 pub mod models;
 pub mod routes;
 pub mod schema;
