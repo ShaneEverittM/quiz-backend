@@ -1,10 +1,10 @@
-#![feature(proc_macro_hygiene, decl_macro)] // decl_macro is for route annotations, proc_macro_hygiene is for better error messages?
+#![feature(proc_macro_hygiene, decl_macro)] // decl_macro is for route annotations, proc_macro_hygiene is for better error messages
 
 #[macro_use]
-extern crate diesel;
+extern crate diesel; // ORM and query builder
 
 #[macro_use]
-extern crate rocket;
+extern crate rocket; // framework
 
 #[macro_use]
 extern crate rocket_contrib;
