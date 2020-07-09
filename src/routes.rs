@@ -139,53 +139,50 @@ pub fn insert_quiz(
         results,
     } = f_quiz.into_inner();
 
-    let _rows_changed = diesel::insert_into(quiz_table)
-        .values(NewQuiz::from(quiz))
-        .execute(conn)
-        .map_err(|msg| Conflict(Some(msg.to_string())))?;
-    let last_qz_id: u64 = diesel::select(last_insert_id)
-        .first(conn)
-        .map_err(|msg| Conflict(Some(msg.to_string())))?;
-    let mut cur_question = 0;
-    for qs in questions {
-        let question_to_add = NewQuestion {
-            description: qs.description.clone(),
-            qz_id: last_qz_id as i32,
-        };
-        let _row_changed = diesel::insert_into(question_table)
-            .values(question_to_add)
-            .execute(conn)
-            .map_err(|msg| Conflict(Some(msg.to_string())))?;
-        let last_q_id: u64 = diesel::select(last_insert_id)
-            .first(conn)
-            .map_err(|msg| Conflict(Some(msg.to_string())))?;
-        for ans in &answers[cur_question] {
-            let answer_to_add = NewAnswer {
-                description: ans.description.clone(),
-                val: ans.val,
-                q_id: last_q_id as i32,
-            };
-            let _rows_changed = diesel::insert_into(answer_table)
-                .values(answer_to_add)
-                .execute(conn)
-                .map_err(|msg| Conflict(Some(msg.to_string())))?;
-        }
-        cur_question += 1;
-    }
+    Ok(conn
+        .transaction::<String, diesel::result::Error, _>(|| {
+            diesel::insert_into(quiz_table)
+                .values(NewQuiz::from(quiz))
+                .execute(conn)?;
+            let last_qz_id: u64 = diesel::select(last_insert_id).first(conn)?;
+            let mut cur_question = 0;
+            for qs in questions {
+                let question_to_add = NewQuestion {
+                    description: qs.description.clone(),
+                    qz_id: last_qz_id as i32,
+                };
+                let _row_changed = diesel::insert_into(question_table)
+                    .values(question_to_add)
+                    .execute(conn)?;
+                let last_q_id: u64 = diesel::select(last_insert_id).first(conn)?;
+                for ans in &answers[cur_question] {
+                    let answer_to_add = NewAnswer {
+                        description: ans.description.clone(),
+                        val: ans.val,
+                        q_id: last_q_id as i32,
+                    };
+                    let _rows_changed = diesel::insert_into(answer_table)
+                        .values(answer_to_add)
+                        .execute(conn)?;
+                }
+                cur_question += 1;
+            }
 
-    let new_results: Vec<NewQuizResult> = results
-        .iter()
-        .enumerate()
-        .map(|(i, q)| NewQuizResult {
-            num: i as i32,
-            header: q.header.clone(),
-            description: q.description.clone(),
-            qz_id: last_qz_id as i32,
+            let new_results: Vec<NewQuizResult> = results
+                .iter()
+                .enumerate()
+                .map(|(i, q)| NewQuizResult {
+                    num: i as i32,
+                    header: q.header.clone(),
+                    description: q.description.clone(),
+                    qz_id: last_qz_id as i32,
+                })
+                .collect();
+            diesel::insert_into(result_table)
+                .values(new_results)
+                .execute(conn)?;
+
+            Ok("Inserted".into())
         })
-        .collect();
-    diesel::insert_into(result_table)
-        .values(new_results)
-        .execute(conn)
-        .map_err(|msg| Conflict(Some(msg.to_string())))?;
-    Ok("Inserted".into())
+        .map_err(|msg| Conflict(Some(msg.to_string())))?)
 }
