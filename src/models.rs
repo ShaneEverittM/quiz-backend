@@ -97,7 +97,6 @@ pub struct IncomingQuestion {
 pub struct IncomingQuiz {
     pub name: String,
     pub description: String,
-    pub num_questions: i32,
 }
 
 #[derive(Deserialize, Debug)]
