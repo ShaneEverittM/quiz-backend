@@ -31,6 +31,7 @@ pub fn index(conn_ptr: DbConn) -> Result<Json<Vec<Quiz>>, String> {
     let ref conn = *conn_ptr; //Pull a connection out of the connection pool
     Ok(Json(
         quiz_table
+            .limit(6)
             .load::<Quiz>(conn)
             .map_err(|msg| msg.to_string())?,
     ))
