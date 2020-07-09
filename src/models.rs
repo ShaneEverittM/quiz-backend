@@ -22,6 +22,7 @@ pub struct Question {
 pub struct Quiz {
     pub id: i32,
     pub name: String,
+    pub description: String,
     pub num_questions: i32,
 }
 
@@ -57,6 +58,7 @@ pub struct NewQuestion {
 #[table_name = "quiz"]
 pub struct NewQuiz {
     pub name: String,
+    pub description: String,
     pub num_questions: i32,
 }
 
@@ -64,6 +66,7 @@ impl From<IncomingQuiz> for NewQuiz {
     fn from(item: IncomingQuiz) -> Self {
         Self {
             name: item.name,
+            description: item.description,
             num_questions: item.num_questions,
         }
     }
@@ -96,6 +99,7 @@ pub struct IncomingQuestion {
 #[derive(Deserialize, Debug)]
 pub struct IncomingQuiz {
     pub name: String,
+    pub description: String,
     pub num_questions: i32,
 }
 

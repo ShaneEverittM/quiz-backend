@@ -19,6 +19,7 @@ table! {
     quiz (id) {
         id -> Integer,
         name -> Varchar,
+        description -> Varchar,
         num_questions -> Integer,
     }
 }
