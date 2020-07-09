@@ -23,7 +23,6 @@ pub struct Quiz {
     pub id: i32,
     pub name: String,
     pub description: String,
-    pub num_questions: i32,
 }
 //TODO make description optional
 #[derive(Serialize, Queryable, Debug)]
@@ -59,7 +58,6 @@ pub struct NewQuestion {
 pub struct NewQuiz {
     pub name: String,
     pub description: String,
-    pub num_questions: i32,
 }
 
 impl From<IncomingQuiz> for NewQuiz {
@@ -67,7 +65,6 @@ impl From<IncomingQuiz> for NewQuiz {
         Self {
             name: item.name,
             description: item.description,
-            num_questions: item.num_questions,
         }
     }
 }

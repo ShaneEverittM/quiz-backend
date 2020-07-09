@@ -1,8 +1,7 @@
 CREATE TABLE quiz (
     id INTEGER AUTO_INCREMENT PRIMARY KEY,
     name VARCHAR(240) NOT NULL,
-    description VARCHAR(240) NOT NULL,
-    num_questions INTEGER NOT NULL
+    description VARCHAR(240) NOT NULL
 );
 CREATE TABLE question (
     id INTEGER AUTO_INCREMENT PRIMARY KEY,
@@ -25,3 +24,8 @@ CREATE TABLE result (
     qz_id INTEGER NOT NULL,
     FOREIGN KEY(qz_id) REFERENCES quiz(id) ON DELETE CASCADE
 );
+create view topQuizzes as
+select quiz.name,
+    quiz.id,
+    quiz.description
+from quiz;

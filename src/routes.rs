@@ -27,12 +27,13 @@ pub struct IncomingFullQuiz {
 // Test route.
 #[get("/")]
 pub fn index(conn_ptr: DbConn) -> Result<Json<Vec<Quiz>>, String> {
-    use crate::schema::quiz::dsl::*; //convenience re-exports from 'table!' macro codegen
+    use crate::schema::quiz::dsl::quiz as quiz_table; //convenience re-exports from 'table!' macro codegen
     let ref conn = *conn_ptr; //Pull a connection out of the connection pool
-    match quiz.load::<Quiz>(conn) {
-        Ok(quizzes) => Ok(Json(quizzes)),
-        Err(msg) => Err(format!("Error loading quiz: {}", msg).into()),
-    }
+    Ok(Json(
+        quiz_table
+            .load::<Quiz>(conn)
+            .map_err(|msg| msg.to_string())?,
+    ))
 }
 
 // This route handles retrieval of all of the constituant parts of a quiz from their
