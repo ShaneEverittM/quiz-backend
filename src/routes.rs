@@ -39,7 +39,7 @@ pub fn index(conn_ptr: DbConn) -> Result<Json<Vec<Quiz>>, String> {
 // tables and assembles them into a large struct and sends it as JSON.
 #[get("/quiz/<quiz_id>")]
 pub fn get_full_quiz(quiz_id: i32, conn_ptr: DbConn) -> Result<Json<FullQuiz>, NotFound<String>> {
-    // Could do some of these concurrently
+    // TODO Could do some of these concurrently
     let quiz = get_quiz(quiz_id, &*conn_ptr)?;
     let questions = get_questions(quiz_id, &*conn_ptr)?;
     let answers = get_answers(&questions, &*conn_ptr)?;
@@ -155,8 +155,8 @@ pub fn insert_quiz(
                 .values(answer_to_add)
                 .execute(conn)
                 .map_err(|msg| Conflict(Some(msg.to_string())))?;
-            cur_question += 1;
         }
+        cur_question += 1;
     }
 
     let new_results: Vec<NewQuizResult> = results
