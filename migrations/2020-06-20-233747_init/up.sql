@@ -24,8 +24,3 @@ CREATE TABLE result (
     qz_id INTEGER NOT NULL,
     FOREIGN KEY(qz_id) REFERENCES quiz(id) ON DELETE CASCADE
 );
-create view topQuizzes as
-select quiz.name,
-    quiz.id,
-    quiz.description
-from quiz;
