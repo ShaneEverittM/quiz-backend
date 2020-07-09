@@ -101,7 +101,6 @@ pub struct IncomingQuiz {
 
 #[derive(Deserialize, Debug)]
 pub struct IncomingQuizResult {
-    pub num: i32,
     pub header: String,
     pub description: String,
 }

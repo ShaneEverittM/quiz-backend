@@ -161,8 +161,9 @@ pub fn insert_quiz(
 
     let new_results: Vec<NewQuizResult> = results
         .iter()
-        .map(|q| NewQuizResult {
-            num: q.num,
+        .enumerate()
+        .map(|(i, q)| NewQuizResult {
+            num: i as i32,
             header: q.header.clone(),
             description: q.description.clone(),
             qz_id: last_qz_id as i32,
