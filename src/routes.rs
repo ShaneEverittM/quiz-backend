@@ -33,6 +33,18 @@ pub fn index(conn_ptr: DbConn) -> Result<Json<Vec<Quiz>>, String> {
         quiz_table
             .limit(6)
             .load::<Quiz>(conn)
+            .map_err(|msg| msg.to_string())?, //TODO create a from trait impl to avoid this everywhere
+    ))
+}
+
+#[get("/browse")]
+pub fn browse(conn_ptr: DbConn) -> Result<Json<Vec<Quiz>>, String> {
+    use crate::schema::quiz::dsl::{name, quiz as quiz_table};
+    let ref conn = *conn_ptr;
+    Ok(Json(
+        quiz_table
+            .order(name.asc())
+            .load::<Quiz>(conn)
             .map_err(|msg| msg.to_string())?,
     ))
 }
