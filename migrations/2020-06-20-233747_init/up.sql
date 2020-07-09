@@ -1,6 +1,6 @@
 CREATE TABLE quiz (
     id INTEGER AUTO_INCREMENT PRIMARY KEY,
-    name VARCHAR(25) NOT NULL,
+    name VARCHAR(240) NOT NULL,
     num_questions INTEGER NOT NULL
 );
 CREATE TABLE question (
