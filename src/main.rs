@@ -31,7 +31,7 @@ fn main() {
     rocket::ignite()
         .mount(
             "/",
-            routes![routes::index, routes::get_full_quiz, routes::insert_quiz],
+            routes![routes::index, routes::get_full_quiz, routes::insert_quiz,routes::browse],
         )
         .attach(DbConn::fairing())
         .attach(CorsOptions::default().to_cors().unwrap())
