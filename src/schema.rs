@@ -37,4 +37,9 @@ joinable!(answer -> question (q_id));
 joinable!(question -> quiz (qz_id));
 joinable!(result -> quiz (qz_id));
 
-allow_tables_to_appear_in_same_query!(answer, question, quiz, result,);
+allow_tables_to_appear_in_same_query!(
+    answer,
+    question,
+    quiz,
+    result,
+);

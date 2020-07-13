@@ -18,7 +18,8 @@ pub struct Question {
     pub qz_id: i32,
 }
 
-#[derive(Serialize, Queryable, Debug)]
+#[derive(Serialize, Queryable, QueryableByName, Debug)]
+#[table_name = "quiz"]
 pub struct Quiz {
     pub id: i32,
     pub name: String,

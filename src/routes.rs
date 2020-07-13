@@ -1,5 +1,6 @@
 use diesel::{self, prelude::*}; //common diesel things
 
+use rocket::request::Form;
 use rocket::response::status::{Conflict, NotFound}; // Response types
 use rocket_contrib::json::Json; // Easy Json coercion
 
@@ -49,15 +50,50 @@ pub fn browse(conn_ptr: DbConn) -> Result<Json<Vec<Quiz>>, String> {
     ))
 }
 
+//This function is not perfect, I wish it were better.
+#[get("/search?<query>")]
+pub fn search(query: String, conn_ptr: DbConn) -> Result<Json<Vec<FullQuiz>>, NotFound<String>> {
+    let ref conn = *conn_ptr;
+    let sql_query_string = query.replace(" ", "%");
+    let sql_query_string = String::from("%") + &sql_query_string + "%";
+    let quizzes: Vec<Quiz> = diesel::sql_query(format!(
+        "SELECT * from quiz where match(name, description) against (\"{}\" in boolean mode)", //what is sql injection
+        sql_query_string
+    ))
+    .load(conn)
+    .unwrap(); //because if this query is wrong, god help us all
+
+    let quiz_results: Vec<Result<Json<FullQuiz>, NotFound<String>>> =
+        quizzes.iter().map(|q| get_full_quiz(q.id, conn)).collect();
+
+    let mut full_quizzes = Vec::new();
+    for quiz_res in quiz_results {
+        match quiz_res {
+            Ok(quiz) => full_quizzes.push(quiz.into_inner()),
+            Err(resp) => return Err(resp),
+        }
+    }
+    Ok(Json(full_quizzes))
+}
+
 // This route handles retrieval of all of the constituant parts of a quiz from their
 // tables and assembles them into a large struct and sends it as JSON.
 #[get("/quiz/<quiz_id>")]
-pub fn get_full_quiz(quiz_id: i32, conn_ptr: DbConn) -> Result<Json<FullQuiz>, NotFound<String>> {
+pub fn get_full_quiz_route(
+    quiz_id: i32,
+    conn_ptr: DbConn,
+) -> Result<Json<FullQuiz>, NotFound<String>> {
+    get_full_quiz(quiz_id, &*conn_ptr)
+}
+pub fn get_full_quiz(
+    quiz_id: i32,
+    conn: &diesel::MysqlConnection,
+) -> Result<Json<FullQuiz>, NotFound<String>> {
     // TODO Could do some of these concurrently
-    let quiz = get_quiz(quiz_id, &*conn_ptr)?;
-    let questions = get_questions(quiz_id, &*conn_ptr)?;
-    let answers = get_answers(&questions, &*conn_ptr)?;
-    let results = get_results(quiz_id, &*conn_ptr)?;
+    let quiz = get_quiz(quiz_id, conn)?;
+    let questions = get_questions(quiz_id, conn)?;
+    let answers = get_answers(&questions, conn)?;
+    let results = get_results(quiz_id, conn)?;
     Ok(Json(FullQuiz {
         quiz,
         questions,

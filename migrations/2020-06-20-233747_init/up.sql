@@ -24,3 +24,4 @@ CREATE TABLE result (
     qz_id INTEGER NOT NULL,
     FOREIGN KEY(qz_id) REFERENCES quiz(id) ON DELETE CASCADE
 );
+create fulltext index search on quiz(name, description);
