@@ -1,6 +1,5 @@
 use diesel::{self, prelude::*}; //common diesel things
 
-use rocket::request::Form;
 use rocket::response::status::{Conflict, NotFound}; // Response types
 use rocket_contrib::json::Json; // Easy Json coercion
 
@@ -52,7 +51,7 @@ pub fn browse(conn_ptr: DbConn) -> Result<Json<Vec<Quiz>>, String> {
 
 //This function is not perfect, I wish it were better.
 #[get("/search?<query>")]
-pub fn search(query: String, conn_ptr: DbConn) -> Result<Json<Vec<FullQuiz>>, NotFound<String>> {
+pub fn search(query: String, conn_ptr: DbConn) -> Result<Json<Vec<Quiz>>, NotFound<String>> {
     let ref conn = *conn_ptr;
     let sql_query_string = query.replace(" ", "%");
     let sql_query_string = String::from("%") + &sql_query_string + "%";
@@ -63,17 +62,7 @@ pub fn search(query: String, conn_ptr: DbConn) -> Result<Json<Vec<FullQuiz>>, No
     .load(conn)
     .unwrap(); //because if this query is wrong, god help us all
 
-    let quiz_results: Vec<Result<Json<FullQuiz>, NotFound<String>>> =
-        quizzes.iter().map(|q| get_full_quiz(q.id, conn)).collect();
-
-    let mut full_quizzes = Vec::new();
-    for quiz_res in quiz_results {
-        match quiz_res {
-            Ok(quiz) => full_quizzes.push(quiz.into_inner()),
-            Err(resp) => return Err(resp),
-        }
-    }
-    Ok(Json(full_quizzes))
+    Ok(Json(quizzes))
 }
 
 // This route handles retrieval of all of the constituant parts of a quiz from their
