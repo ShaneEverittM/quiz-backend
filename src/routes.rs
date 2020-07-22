@@ -49,18 +49,17 @@ pub fn browse(conn_ptr: DbConn) -> Result<Json<Vec<Quiz>>, String> {
     ))
 }
 
-//This function is not perfect, I wish it were better.
 #[get("/search?<query>")]
 pub fn search(query: String, conn_ptr: DbConn) -> Result<Json<Vec<Quiz>>, NotFound<String>> {
     let ref conn = *conn_ptr;
     let sql_query_string = query.replace(" ", "%");
     let sql_query_string = String::from("%") + &sql_query_string + "%";
-    let quizzes: Vec<Quiz> = diesel::sql_query(format!(
-        "SELECT * from quiz where match(name, description) against (\"{}\" in boolean mode)", //what is sql injection
-        sql_query_string
-    ))
+    let quizzes: Vec<Quiz> = diesel::sql_query(
+        "SELECT * from quiz where match(name, description) against (? in boolean mode)",
+    )
+    .bind::<diesel::sql_types::Text, _>(sql_query_string)
     .load(conn)
-    .unwrap(); //because if this query is wrong, god help us all
+    .unwrap();
 
     Ok(Json(quizzes))
 }
