@@ -25,6 +25,7 @@ pub struct Quiz {
     pub name: String,
     pub description: String,
 }
+
 //TODO make description optional
 #[derive(Serialize, Queryable, Debug)]
 pub struct QuizResult {
