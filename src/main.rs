@@ -13,6 +13,8 @@ extern crate rocket_contrib; // useful community libraries
 extern crate serde;
 extern crate serde_json;
 
+extern crate crypto;
+
 #[macro_use]
 extern crate serde_derive; // to be able to derive
 
@@ -36,7 +38,10 @@ fn main() {
                 routes::get_full_quiz_route,
                 routes::insert_quiz,
                 routes::browse,
-                routes::search
+                routes::search,
+                routes::create,
+                routes::login,
+                routes::fetch_info_by_user_id,
             ],
         )
         .attach(DbConn::fairing())

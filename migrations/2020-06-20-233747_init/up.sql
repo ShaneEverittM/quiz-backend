@@ -24,4 +24,14 @@ CREATE TABLE result (
     qz_id INTEGER NOT NULL,
     FOREIGN KEY(qz_id) REFERENCES quiz(id) ON DELETE CASCADE
 );
+CREATE TABLE user (
+    id INTEGER AUTO_INCREMENT PRIMARY KEY,
+    name VARCHAR(240) NOT NULL,
+    email VARCHAR(240) NOT NULL
+);
+CREATE TABLE auth_info (
+    id INTEGER AUTO_INCREMENT PRIMARY KEY,
+    uid INTEGER NOT NULL,
+    password_hash TEXT NOT NULL
+);
 create fulltext index search on quiz(name, description);

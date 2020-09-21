@@ -8,6 +8,14 @@ table! {
 }
 
 table! {
+    auth_info (id) {
+        id -> Integer,
+        uid -> Integer,
+        password_hash -> Text,
+    }
+}
+
+table! {
     question (id) {
         id -> Integer,
         description -> Varchar,
@@ -33,13 +41,23 @@ table! {
     }
 }
 
+table! {
+    user (id) {
+        id -> Integer,
+        name -> Varchar,
+        email -> Varchar,
+    }
+}
+
 joinable!(answer -> question (q_id));
 joinable!(question -> quiz (qz_id));
 joinable!(result -> quiz (qz_id));
 
 allow_tables_to_appear_in_same_query!(
     answer,
+    auth_info,
     question,
     quiz,
     result,
+    user,
 );
