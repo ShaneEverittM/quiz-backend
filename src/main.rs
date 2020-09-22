@@ -8,6 +8,8 @@ extern crate rocket; // framework
 
 #[macro_use]
 extern crate rocket_contrib; // useful community libraries
+use rocket::http::Method;
+use rocket_cors::{AllowedHeaders, AllowedOrigins};
 
 // Because everyone needs serde
 extern crate serde;
@@ -32,6 +34,16 @@ pub mod sql_utils;
 pub struct DbConn(diesel::MysqlConnection);
 
 fn main() {
+    let allowed_origins = AllowedOrigins::some_exact(&["https://localhost:3000"]);
+
+    // You can also deserialize this
+    let cors = rocket_cors::CorsOptions {
+        allowed_origins,
+        allow_credentials: true,
+        ..Default::default()
+    }
+    .to_cors()
+    .unwrap();
     rocket::ignite()
         .mount(
             "/",
@@ -47,6 +59,6 @@ fn main() {
             ],
         )
         .attach(DbConn::fairing())
-        .attach(CorsOptions::default().to_cors().unwrap())
+        .attach(cors)
         .launch();
 }
