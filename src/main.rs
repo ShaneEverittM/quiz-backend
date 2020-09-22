@@ -34,11 +34,12 @@ pub mod sql_utils;
 pub struct DbConn(diesel::MysqlConnection);
 
 fn main() {
-    let allowed_origins = AllowedOrigins::some_exact(&["https://localhost:3000"]);
+    let allowed_origins = AllowedOrigins::some_exact(&["http://localhost:3000/*"]);
 
     // You can also deserialize this
     let cors = rocket_cors::CorsOptions {
         allowed_origins,
+        allowed_methods: vec![Method::Get,Method::Post].into_iter().map(From::from).collect(),
         allow_credentials: true,
         ..Default::default()
     }
@@ -56,6 +57,7 @@ fn main() {
                 auth_routes::create,
                 auth_routes::login,
                 auth_routes::fetch_info_by_user_id,
+                auth_routes::logout,
             ],
         )
         .attach(DbConn::fairing())
