@@ -55,7 +55,7 @@ pub fn login(
     conn_ptr: DbConn,
     login_info: Json<LoginInfo>,
     mut cookies: Cookies,
-) -> Json<Option<i32>> {
+) -> Json<Option<User>> {
     let ref conn = *conn_ptr;
     let user_opt = fetch_user_by_email(conn, &login_info.username);
     match user_opt {
@@ -66,7 +66,7 @@ pub fn login(
                     let hash = hash_password(&login_info.password);
                     if hash == auth_info.password_hash {
                         cookies.add_private(Cookie::new("user_id", user.id.to_string()));
-                        Json(Some(user.id))
+                        Json(fetch_user_by_id(conn, user.id))
                     } else {
                         Json(None)
                     }

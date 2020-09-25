@@ -9,7 +9,7 @@ extern crate rocket; // framework
 #[macro_use]
 extern crate rocket_contrib; // useful community libraries
 use rocket::http::Method;
-use rocket_cors::{AllowedHeaders, AllowedOrigins};
+use rocket_cors::AllowedOrigins;
 
 // Because everyone needs serde
 extern crate serde;
@@ -37,9 +37,12 @@ fn main() {
     let allowed_origins = AllowedOrigins::some_exact(&["http://localhost:3000/*"]);
 
     // You can also deserialize this
-    let cors = rocket_cors::CorsOptions {
+    let cors = CorsOptions {
         allowed_origins,
-        allowed_methods: vec![Method::Get,Method::Post].into_iter().map(From::from).collect(),
+        allowed_methods: vec![Method::Get, Method::Post]
+            .into_iter()
+            .map(From::from)
+            .collect(),
         allow_credentials: true,
         ..Default::default()
     }
