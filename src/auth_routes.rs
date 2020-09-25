@@ -80,9 +80,8 @@ pub fn login(
 
 #[post("/users/logout", format="json")]
 pub fn logout(mut cookies: Cookies) -> () {
-    dbg!(&cookies);
     cookies.remove_private(Cookie::named("user_id"));
-    dbg!(&cookies);
+
 }
 
 #[get("/users/cookies/<uid>")]

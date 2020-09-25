@@ -3,3 +3,4 @@ DROP TABLE if exists result;
 DROP TABLE if exists question;
 DROP TABLE if exists quiz;
 DROP TABLE if exists user;
+DROP Table if exists auth_info;

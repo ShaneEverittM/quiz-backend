@@ -28,6 +28,7 @@ table! {
         id -> Integer,
         name -> Varchar,
         description -> Varchar,
+        u_id -> Integer,
     }
 }
 
@@ -51,6 +52,7 @@ table! {
 
 joinable!(answer -> question (q_id));
 joinable!(question -> quiz (qz_id));
+joinable!(quiz -> user (u_id));
 joinable!(result -> quiz (qz_id));
 
 allow_tables_to_appear_in_same_query!(

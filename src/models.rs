@@ -24,6 +24,7 @@ pub struct Quiz {
     pub id: i32,
     pub name: String,
     pub description: String,
+    pub u_id: i32,
 }
 
 //TODO make description optional
@@ -74,6 +75,7 @@ pub struct NewQuestion {
 pub struct NewQuiz {
     pub name: String,
     pub description: String,
+    pub u_id: i32,
 }
 
 impl From<IncomingQuiz> for NewQuiz {
@@ -81,6 +83,7 @@ impl From<IncomingQuiz> for NewQuiz {
         Self {
             name: item.name,
             description: item.description,
+            u_id: item.u_id,
         }
     }
 }
@@ -125,6 +128,7 @@ pub struct IncomingQuestion {
 pub struct IncomingQuiz {
     pub name: String,
     pub description: String,
+    pub u_id: i32,
 }
 
 #[derive(Deserialize, Debug)]

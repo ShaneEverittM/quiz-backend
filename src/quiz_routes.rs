@@ -55,7 +55,7 @@ pub fn browse(conn_ptr: DbConn) -> Result<Json<Vec<Quiz>>, String> {
 pub fn search(query: String, conn_ptr: DbConn) -> Result<Json<Vec<Quiz>>, NotFound<String>> {
     let ref conn = *conn_ptr;
     let sql_query_string = query.replace(" ", "%");
-    let sql_query_string = String::from("%") + &sql_query_string + "%";
+    let sql_query_string = String::from("*") + &sql_query_string + "*";
     let quizzes: Vec<Quiz> = diesel::sql_query(
         "SELECT * from quiz where match(name, description) against (? in boolean mode)",
     )
