@@ -10,6 +10,13 @@ use crate::DbConn; // The state managed DB connection
 
 use crate::auth_routes::logged_in;
 
+//TODO: Write a trait impl for a logged in user so that request guards do work for me
+
+//TODO: Think about error handling improvements
+
+//TODO: Delete route
+
+//TODO: Edit route
 // Aggregate struct to represent an entire quiz coming out of the db.
 #[derive(Serialize, Debug)]
 pub struct FullQuiz {

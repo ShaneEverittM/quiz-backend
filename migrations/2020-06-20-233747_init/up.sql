@@ -1,3 +1,4 @@
+/*TODO: split this into multiple files*/
 CREATE TABLE user (
     id INTEGER AUTO_INCREMENT PRIMARY KEY,
     name VARCHAR(240) NOT NULL,
@@ -10,7 +11,6 @@ CREATE TABLE quiz (
     u_id INTEGER NOT NULL,
     FOREIGN KEY(u_id) REFERENCES user(id) ON DELETE CASCADE
 );
-
 CREATE TABLE question (
     id INTEGER AUTO_INCREMENT PRIMARY KEY,
     description VARCHAR(240) NOT NULL,
@@ -32,7 +32,6 @@ CREATE TABLE result (
     qz_id INTEGER NOT NULL,
     FOREIGN KEY(qz_id) REFERENCES quiz(id) ON DELETE CASCADE
 );
-
 CREATE TABLE auth_info (
     id INTEGER AUTO_INCREMENT PRIMARY KEY,
     uid INTEGER NOT NULL,
