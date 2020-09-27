@@ -1,6 +1,6 @@
 use diesel::{self, prelude::*}; //common diesel things
 
-use rocket::http::{Cookie, Cookies};
+use rocket::http::Cookies;
 use rocket::response::status::{Conflict, NotFound}; // Response types
 use rocket_contrib::json::Json; // Easy Json coercion
 

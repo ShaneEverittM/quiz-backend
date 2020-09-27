@@ -57,6 +57,7 @@ fn main() {
                 quiz_routes::insert_quiz,
                 quiz_routes::browse,
                 quiz_routes::search,
+                quiz_routes::get_quizzes_by_user_id,
                 auth_routes::create,
                 auth_routes::login,
                 auth_routes::fetch_info_by_user_id,
