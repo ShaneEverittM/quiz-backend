@@ -78,10 +78,9 @@ pub fn login(
     }
 }
 
-#[post("/users/logout", format="json")]
+#[post("/users/logout", format = "json")]
 pub fn logout(mut cookies: Cookies) -> () {
     cookies.remove_private(Cookie::named("user_id"));
-
 }
 
 #[get("/users/cookies/<uid>")]
@@ -90,18 +89,26 @@ pub fn fetch_info_by_user_id(
     uid: i32,
     mut cookies: Cookies,
 ) -> Json<Option<User>> {
-    let logged_in_user = cookies.get_private("user_id");
     let ref conn = *conn_ptr;
+    if logged_in(uid, &mut cookies) {
+        Json(fetch_user_by_id(conn, uid))
+    } else {
+        Json(None)
+    }
+}
+
+pub fn logged_in(uid: i32, cookies: &mut Cookies) -> bool {
+    let logged_in_user = cookies.get_private("user_id");
     match logged_in_user {
         Some(c) => {
             let logged_in_uid = c.value().parse::<i32>().unwrap();
             if logged_in_uid == uid {
-                Json(fetch_user_by_id(conn, uid))
+                true
             } else {
-                Json(None)
+                false
             }
         }
-        None => Json(None),
+        None => false,
     }
 }
 

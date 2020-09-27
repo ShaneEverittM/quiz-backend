@@ -1,11 +1,14 @@
 use diesel::{self, prelude::*}; //common diesel things
 
+use rocket::http::{Cookie, Cookies};
 use rocket::response::status::{Conflict, NotFound}; // Response types
 use rocket_contrib::json::Json; // Easy Json coercion
 
 use crate::models::*; // Models needed for pulling or pushing data
 use crate::sql_utils::last_insert_id; //utility for getting around mysql being bad
 use crate::DbConn; // The state managed DB connection
+
+use crate::auth_routes::logged_in;
 
 // Aggregate struct to represent an entire quiz coming out of the db.
 #[derive(Serialize, Debug)]
@@ -28,6 +31,14 @@ pub struct IncomingFullQuiz {
 #[derive(std::fmt::Debug)]
 pub struct RouteError {
     error: String,
+}
+
+impl RouteError {
+    pub fn new(err: &str) -> Self {
+        Self {
+            error: String::from(err),
+        }
+    }
 }
 
 impl From<diesel::result::Error> for RouteError {
@@ -73,6 +84,25 @@ pub fn search(query: String, conn_ptr: DbConn) -> Result<Json<Vec<Quiz>>, NotFou
     .load(conn)
     .map_err(|e| NotFound(e.into()))
     .map(|val| Json(val))
+}
+
+#[get("/quizzes?<user_id>")]
+pub fn get_quizzes_by_user_id(
+    user_id: i32,
+    conn_ptr: DbConn,
+    mut cookies: Cookies,
+) -> Result<Json<Vec<Quiz>>, NotFound<RouteError>> {
+    if !logged_in(user_id, &mut cookies) {
+        return Err(NotFound(RouteError::new("Not logged in")));
+    }
+    let ref conn = *conn_ptr;
+    use crate::schema::quiz::dsl::{quiz as quiz_table, u_id};
+    let quizzes: Vec<Quiz> = quiz_table
+        .filter(u_id.eq(user_id))
+        .load::<Quiz>(conn)
+        .map_err(|e| NotFound(e.into()))?;
+
+    Ok(Json(quizzes))
 }
 
 // This route handles retrieval of all of the constituant parts of a quiz from their
