@@ -1,6 +1,8 @@
 use diesel::{self, prelude::*}; //common diesel things
 
-use rocket::http::Cookies;
+use rocket::http::RawStr;
+use rocket::request::FromFormValue;
+use rocket::request::{FromRequest, Outcome, Request};
 use rocket::response::status::{Conflict, NotFound}; // Response types
 use rocket_contrib::json::Json; // Easy Json coercion
 
@@ -9,8 +11,6 @@ use crate::sql_utils::last_insert_id; //utility for getting around mysql being b
 use crate::DbConn; // The state managed DB connection
 
 use crate::auth_routes::logged_in;
-
-//TODO: Write a trait impl for a logged in user so that request guards do work for me
 
 //TODO: Think about error handling improvements
 
@@ -64,6 +64,38 @@ impl<'r> rocket::response::Responder<'r> for RouteError {
             .ok()
     }
 }
+
+pub struct LoggedInUserID(i32);
+
+impl<'a, 'r> FromRequest<'a, 'r> for LoggedInUserID {
+    type Error = ();
+    fn from_request(request: &'a Request<'r>) -> Outcome<LoggedInUserID, ()> {
+        let id_opt = request.headers().get_one("x-api-key");
+        match id_opt {
+            Some(id_str) => {
+                let uid = id_str.parse().unwrap();
+                if logged_in(uid, &mut request.cookies()) {
+                    Outcome::Success(LoggedInUserID(uid))
+                } else {
+                    Outcome::Failure((rocket::http::Status::NotFound, ()))
+                }
+            }
+            None => Outcome::Failure((rocket::http::Status::NotFound, ())),
+        }
+    }
+}
+
+impl<'v> FromFormValue<'v> for LoggedInUserID {
+    type Error = ();
+
+    fn from_form_value(form_value: &'v RawStr) -> Result<LoggedInUserID, ()> {
+        match form_value.parse::<i32>() {
+            Ok(id) => Ok(LoggedInUserID(id)),
+            _ => Err(()),
+        }
+    }
+}
+
 // Test route.
 #[get("/")]
 pub fn index(conn_ptr: DbConn) -> Result<Json<Vec<Quiz>>, RouteError> {
@@ -95,17 +127,13 @@ pub fn search(query: String, conn_ptr: DbConn) -> Result<Json<Vec<Quiz>>, NotFou
 
 #[get("/quizzes?<user_id>")]
 pub fn get_quizzes_by_user_id(
-    user_id: i32,
+    user_id: LoggedInUserID,
     conn_ptr: DbConn,
-    mut cookies: Cookies,
 ) -> Result<Json<Vec<Quiz>>, NotFound<RouteError>> {
-    if !logged_in(user_id, &mut cookies) {
-        return Err(NotFound(RouteError::new("Not logged in")));
-    }
     let ref conn = *conn_ptr;
     use crate::schema::quiz::dsl::{quiz as quiz_table, u_id};
     let quizzes: Vec<Quiz> = quiz_table
-        .filter(u_id.eq(user_id))
+        .filter(u_id.eq(user_id.0))
         .load::<Quiz>(conn)
         .map_err(|e| NotFound(e.into()))?;
 
