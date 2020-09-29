@@ -39,7 +39,7 @@ fn main() {
     // You can also deserialize this
     let cors = CorsOptions {
         allowed_origins,
-        allowed_methods: vec![Method::Get, Method::Post]
+        allowed_methods: vec![Method::Get, Method::Post, Method::Delete]
             .into_iter()
             .map(From::from)
             .collect(),
@@ -58,6 +58,7 @@ fn main() {
                 quiz_routes::browse,
                 quiz_routes::search,
                 quiz_routes::get_quizzes_by_user_id,
+                quiz_routes::delete,
                 auth_routes::create,
                 auth_routes::login,
                 auth_routes::fetch_info_by_user_id,
