@@ -14,7 +14,7 @@ use crate::auth_routes::logged_in;
 
 //TODO: Think about error handling improvements
 
-//TODO: Edit route
+//TODO: Create an Edit route
 // Aggregate struct to represent an entire quiz coming out of the db.
 #[derive(Serialize, Debug)]
 pub struct FullQuiz {
@@ -54,14 +54,14 @@ impl From<diesel::result::Error> for RouteError {
     }
 }
 
-impl<'r> rocket::response::Responder<'r> for RouteError {
-    fn respond_to(self, _: &rocket::request::Request) -> rocket::response::Result<'r> {
-        rocket::Response::build()
-            .header(rocket::http::ContentType::Binary)
-            .sized_body(std::io::Cursor::new(self.error))
-            .ok()
-    }
-}
+// impl<'r> rocket::response::Responder<'r> for RouteError {
+//     fn respond_to(self, _: &rocket::request::Request) -> rocket::response::Result<'r> {
+//         rocket::Response::build()
+//             .header(rocket::http::ContentType::Binary)
+//             .sized_body(std::io::Cursor::new(self.error))
+//             .ok()
+//     }
+// }
 
 pub struct LoggedInUserID(i32);
 

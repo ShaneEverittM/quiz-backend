@@ -33,11 +33,11 @@ pub mod sql_utils;
 #[database("quizzes_db")]
 pub struct DbConn(diesel::MysqlConnection);
 
-fn main() {
+fn make_cors() -> rocket_cors::Cors {
     let allowed_origins = AllowedOrigins::some_exact(&["http://localhost:3000/*"]);
 
     // You can also deserialize this
-    let cors = CorsOptions {
+    CorsOptions {
         allowed_origins,
         allowed_methods: vec![Method::Get, Method::Post, Method::Delete]
             .into_iter()
@@ -47,7 +47,9 @@ fn main() {
         ..Default::default()
     }
     .to_cors()
-    .unwrap();
+    .unwrap()
+}
+fn rocket() -> rocket::Rocket {
     rocket::ignite()
         .mount(
             "/",
@@ -66,6 +68,8 @@ fn main() {
             ],
         )
         .attach(DbConn::fairing())
-        .attach(cors)
-        .launch();
+        .attach(make_cors())
+}
+fn main() {
+    rocket().launch();
 }
