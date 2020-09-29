@@ -14,8 +14,6 @@ use crate::auth_routes::logged_in;
 
 //TODO: Think about error handling improvements
 
-//TODO: Delete route
-
 //TODO: Edit route
 // Aggregate struct to represent an entire quiz coming out of the db.
 #[derive(Serialize, Debug)]
@@ -77,7 +75,7 @@ impl<'a, 'r> FromRequest<'a, 'r> for LoggedInUserID {
                 if logged_in(uid, &mut request.cookies()) {
                     Outcome::Success(LoggedInUserID(uid))
                 } else {
-                    Outcome::Failure((rocket::http::Status::NotFound, ()))
+                    Outcome::Failure((rocket::http::Status::Unauthorized, ()))
                 }
             }
             None => Outcome::Failure((rocket::http::Status::NotFound, ())),
@@ -278,4 +276,22 @@ pub fn insert_quiz(
         Ok("Inserted".into())
     })
     .map_err(|msg| Conflict(Some(msg.into())))
+}
+#[allow(unused_variables)]
+#[delete("/quiz?<quiz_id>&<user_id>")]
+pub fn delete(
+    quiz_id: i32,
+    user_id: LoggedInUserID,
+    conn_ptr: DbConn,
+) -> Result<(), Outcome<(), String>> {
+    use crate::schema::quiz::dsl::{id, quiz as quiz_table};
+    let ref conn = *conn_ptr;
+    let res = diesel::delete(quiz_table.filter(id.eq(quiz_id))).execute(conn);
+    match res {
+        Ok(_) => Ok(()),
+        Err(msg) => Err(Outcome::Failure((
+            rocket::http::Status::InternalServerError,
+            msg.to_string(),
+        ))),
+    }
 }
