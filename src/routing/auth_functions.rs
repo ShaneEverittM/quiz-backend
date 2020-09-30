@@ -1,5 +1,5 @@
 // password hashing
-use crate::models::*;
+use crate::models::auth_models::*;
 use crypto::digest::Digest;
 use crypto::sha3::Sha3;
 use diesel::{self, prelude::*};

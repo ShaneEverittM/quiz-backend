@@ -5,8 +5,8 @@ use rocket_contrib::json::Json; // Easy Json coercion
 
 use super::auth_functions::*;
 use super::auth_types::*;
-use crate::models::*; // Models needed for pulling or pushing data
-use crate::sql_utils::last_insert_id; //utility for getting around mysql being bad
+use crate::models::auth_models::*; // Models needed for pulling or pushing data
+use crate::utils::sql_utils::last_insert_id; //utility for getting around mysql being bad
 use crate::DbConn; // The state managed DB connection
 
 #[post("/users/create", format = "json", data = "<create_info>")]

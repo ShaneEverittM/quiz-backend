@@ -1,5 +1,5 @@
 use super::auth_functions::logged_in;
-use crate::models::*;
+use crate::models::quiz_models::*;
 use rocket::http::RawStr;
 use rocket::request::{FromFormValue, FromRequest, Outcome, Request};
 // Aggregate struct to represent an entire quiz coming out of the db.

@@ -25,7 +25,7 @@ use rocket_cors::CorsOptions; // must appease our CORS overlords
 pub mod models;
 pub mod routing;
 pub mod schema;
-pub mod sql_utils;
+pub mod utils;
 
 // Managed struct that holds the db connection, specifically to a database called 'quizzes_db'
 #[database("quizzes_db")]

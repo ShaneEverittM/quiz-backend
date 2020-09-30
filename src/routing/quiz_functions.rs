@@ -1,5 +1,5 @@
 use super::quiz_types::*;
-use crate::models::*;
+use crate::models::quiz_models::*;
 use diesel::{self, prelude::*};
 use rocket::response::status::NotFound;
 use rocket_contrib::json::Json;

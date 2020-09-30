@@ -4,8 +4,8 @@ use rocket::request::Outcome;
 use rocket::response::status::{Conflict, NotFound}; // Response types
 use rocket_contrib::json::Json; // Easy Json coercion
 
-use crate::models::*; // Models needed for pulling or pushing data
-use crate::sql_utils::last_insert_id; //utility for getting around mysql being bad
+use crate::models::quiz_models::*; // Models needed for pulling or pushing data
+use crate::utils::sql_utils::last_insert_id; //utility for getting around mysql being bad
 use crate::DbConn; // The state managed DB connection
 
 use super::quiz_functions::*;
