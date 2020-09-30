@@ -33,7 +33,7 @@ pub struct IncomingFullQuiz {
     results: Vec<IncomingQuizResult>,
 }
 
-#[derive(std::fmt::Debug)]
+#[derive(Debug)]
 pub struct RouteError {
     error: String,
 }
@@ -54,14 +54,14 @@ impl From<diesel::result::Error> for RouteError {
     }
 }
 
-// impl<'r> rocket::response::Responder<'r> for RouteError {
-//     fn respond_to(self, _: &rocket::request::Request) -> rocket::response::Result<'r> {
-//         rocket::Response::build()
-//             .header(rocket::http::ContentType::Binary)
-//             .sized_body(std::io::Cursor::new(self.error))
-//             .ok()
-//     }
-// }
+impl<'r> rocket::response::Responder<'r> for RouteError {
+    fn respond_to(self, _: &rocket::request::Request) -> rocket::response::Result<'r> {
+        rocket::Response::build()
+            .header(rocket::http::ContentType::Binary)
+            .sized_body(std::io::Cursor::new(self.error))
+            .ok()
+    }
+}
 
 pub struct LoggedInUserID(i32);
 
@@ -216,7 +216,7 @@ fn get_results(
 pub fn insert_quiz(
     f_quiz: Json<IncomingFullQuiz>,
     conn_ptr: DbConn,
-) -> Result<String, Conflict<RouteError>> {
+) -> Result<Json<i32>, Conflict<RouteError>> {
     use crate::schema::answer::dsl::answer as answer_table;
     use crate::schema::question::dsl::question as question_table;
     use crate::schema::quiz::dsl::quiz as quiz_table;
@@ -231,7 +231,7 @@ pub fn insert_quiz(
     } = f_quiz.into_inner();
 
     // Attempts to insert and associate all the new records under a transaction, rolling back under failure
-    conn.transaction::<String, diesel::result::Error, _>(|| {
+    conn.transaction::<Json<i32>, diesel::result::Error, _>(|| {
         diesel::insert_into(quiz_table)
             .values(NewQuiz::from(quiz))
             .execute(conn)?;
@@ -273,9 +273,13 @@ pub fn insert_quiz(
             .values(new_results)
             .execute(conn)?;
 
-        Ok("Inserted".into())
+        Ok(Json(last_qz_id as i32))
     })
-    .map_err(|msg| Conflict(Some(msg.into())))
+    .map_err(|msg| {
+        Conflict(Some(RouteError {
+            error: msg.to_string(),
+        }))
+    })
 }
 #[allow(unused_variables)]
 #[delete("/quiz?<quiz_id>&<user_id>")]
