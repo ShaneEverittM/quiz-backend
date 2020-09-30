@@ -1,4 +1,3 @@
-/*TODO: split this into multiple files*/
 CREATE TABLE user (
     id INTEGER AUTO_INCREMENT PRIMARY KEY,
     name VARCHAR(240) NOT NULL,
