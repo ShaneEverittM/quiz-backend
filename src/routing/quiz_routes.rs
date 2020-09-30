@@ -1,8 +1,6 @@
 use diesel::{self, prelude::*}; //common diesel things
 
-use rocket::http::RawStr;
-use rocket::request::FromFormValue;
-use rocket::request::{FromRequest, Outcome, Request};
+use rocket::request::Outcome;
 use rocket::response::status::{Conflict, NotFound}; // Response types
 use rocket_contrib::json::Json; // Easy Json coercion
 
@@ -10,90 +8,12 @@ use crate::models::*; // Models needed for pulling or pushing data
 use crate::sql_utils::last_insert_id; //utility for getting around mysql being bad
 use crate::DbConn; // The state managed DB connection
 
-use crate::auth_routes::logged_in;
+use super::quiz_functions::*;
+use super::quiz_types::*;
 
 //TODO: Think about error handling improvements
 
 //TODO: Create an Edit route
-// Aggregate struct to represent an entire quiz coming out of the db.
-#[derive(Serialize, Debug)]
-pub struct FullQuiz {
-    quiz: Quiz,
-    questions: Vec<Question>,
-    answers: Vec<Vec<Answer>>,
-    results: Vec<QuizResult>,
-}
-
-// Aggregate struct to represent an entire incoming quiz to be processed before going into the db.
-#[derive(Deserialize, Debug)]
-pub struct IncomingFullQuiz {
-    quiz: IncomingQuiz,
-    questions: Vec<IncomingQuestion>,
-    answers: Vec<Vec<IncomingAnswer>>,
-    results: Vec<IncomingQuizResult>,
-}
-
-#[derive(Debug)]
-pub struct RouteError {
-    error: String,
-}
-
-impl RouteError {
-    pub fn new(err: &str) -> Self {
-        Self {
-            error: String::from(err),
-        }
-    }
-}
-
-impl From<diesel::result::Error> for RouteError {
-    fn from(err: diesel::result::Error) -> Self {
-        RouteError {
-            error: err.to_string(),
-        }
-    }
-}
-
-impl<'r> rocket::response::Responder<'r> for RouteError {
-    fn respond_to(self, _: &rocket::request::Request) -> rocket::response::Result<'r> {
-        rocket::Response::build()
-            .header(rocket::http::ContentType::Binary)
-            .sized_body(std::io::Cursor::new(self.error))
-            .ok()
-    }
-}
-
-pub struct LoggedInUserID(i32);
-
-impl<'a, 'r> FromRequest<'a, 'r> for LoggedInUserID {
-    type Error = ();
-    fn from_request(request: &'a Request<'r>) -> Outcome<LoggedInUserID, ()> {
-        let id_opt = request.headers().get_one("x-api-key");
-        match id_opt {
-            Some(id_str) => {
-                let uid = id_str.parse().unwrap();
-                if logged_in(uid, &mut request.cookies()) {
-                    Outcome::Success(LoggedInUserID(uid))
-                } else {
-                    Outcome::Failure((rocket::http::Status::Unauthorized, ()))
-                }
-            }
-            None => Outcome::Failure((rocket::http::Status::NotFound, ())),
-        }
-    }
-}
-
-impl<'v> FromFormValue<'v> for LoggedInUserID {
-    type Error = ();
-
-    fn from_form_value(form_value: &'v RawStr) -> Result<LoggedInUserID, ()> {
-        match form_value.parse::<i32>() {
-            Ok(id) => Ok(LoggedInUserID(id)),
-            _ => Err(()),
-        }
-    }
-}
-
 // Test route.
 #[get("/")]
 pub fn index(conn_ptr: DbConn) -> Result<Json<Vec<Quiz>>, RouteError> {
@@ -147,69 +67,6 @@ pub fn get_full_quiz_route(
 ) -> Result<Json<FullQuiz>, NotFound<RouteError>> {
     get_full_quiz(quiz_id, &*conn_ptr)
 }
-pub fn get_full_quiz(
-    quiz_id: i32,
-    conn: &diesel::MysqlConnection,
-) -> Result<Json<FullQuiz>, NotFound<RouteError>> {
-    // Cannot do these concurrently, because they are all using the same db connection
-    let quiz = get_quiz(quiz_id, conn)?;
-    let questions = get_questions(quiz_id, conn)?;
-    let answers = get_answers(&questions, conn)?;
-    let results = get_results(quiz_id, conn)?;
-    Ok(Json(FullQuiz {
-        quiz,
-        questions,
-        answers,
-        results,
-    }))
-}
-
-fn get_quiz(quiz_id: i32, conn: &diesel::MysqlConnection) -> Result<Quiz, NotFound<RouteError>> {
-    use crate::schema::quiz::dsl::quiz as quiz_table;
-    quiz_table
-        .find(quiz_id)
-        .first::<Quiz>(conn)
-        .map_err(|msg| NotFound(msg.into()))
-}
-
-fn get_questions(
-    quiz_id: i32,
-    conn: &diesel::MysqlConnection,
-) -> Result<Vec<Question>, NotFound<RouteError>> {
-    use crate::schema::question::dsl::{question as question_table, qz_id};
-    question_table
-        .filter(qz_id.eq(quiz_id))
-        .load::<Question>(conn)
-        .map_err(|msg| NotFound(msg.into()))
-}
-
-fn get_answers(
-    questions: &Vec<Question>,
-    conn: &diesel::MysqlConnection,
-) -> Result<Vec<Vec<Answer>>, NotFound<RouteError>> {
-    use crate::schema::answer::dsl::{answer as answer_table, q_id};
-    let mut answers: Vec<Vec<Answer>> = Vec::new();
-    for cur_question in questions {
-        let inner_answers = answer_table
-            .filter(q_id.eq(cur_question.id))
-            .load::<Answer>(conn)
-            .map_err(|msg| NotFound(msg.into()))?;
-        answers.push(inner_answers);
-    }
-    Ok(answers)
-}
-
-fn get_results(
-    quiz_id: i32,
-    conn: &diesel::MysqlConnection,
-) -> Result<Vec<QuizResult>, NotFound<RouteError>> {
-    use crate::schema::result::dsl::{qz_id, result as result_table};
-    result_table
-        .filter(qz_id.eq(quiz_id))
-        .load::<QuizResult>(conn)
-        .map_err(|msg| NotFound(msg.into()))
-}
-
 // This route handles adding new quizzes to the db. Takes a large amount of data in the body
 // and destructures it into its fields for insertion into their respective tables.
 #[post("/quiz", format = "json", data = "<f_quiz>")]

@@ -22,10 +22,8 @@ extern crate serde_derive; // to be able to derive
 
 use rocket_cors::CorsOptions; // must appease our CORS overlords
 
-// apparently this is how you declare modules, at the crate root
-pub mod auth_routes;
 pub mod models;
-pub mod quiz_routes;
+pub mod routing;
 pub mod schema;
 pub mod sql_utils;
 
@@ -54,17 +52,17 @@ fn rocket() -> rocket::Rocket {
         .mount(
             "/",
             routes![
-                quiz_routes::index,
-                quiz_routes::get_full_quiz_route,
-                quiz_routes::insert_quiz,
-                quiz_routes::browse,
-                quiz_routes::search,
-                quiz_routes::get_quizzes_by_user_id,
-                quiz_routes::delete,
-                auth_routes::create,
-                auth_routes::login,
-                auth_routes::fetch_info_by_user_id,
-                auth_routes::logout,
+                routing::quiz_routes::index,
+                routing::quiz_routes::get_full_quiz_route,
+                routing::quiz_routes::insert_quiz,
+                routing::quiz_routes::browse,
+                routing::quiz_routes::search,
+                routing::quiz_routes::get_quizzes_by_user_id,
+                routing::quiz_routes::delete,
+                routing::auth_routes::create,
+                routing::auth_routes::login,
+                routing::auth_routes::fetch_info_by_user_id,
+                routing::auth_routes::logout,
             ],
         )
         .attach(DbConn::fairing())
