@@ -20,10 +20,7 @@ pub fn get_full_quiz(
     }))
 }
 
-pub fn get_quiz(
-    quiz_id: i32,
-    conn: &diesel::MysqlConnection,
-) -> Result<Quiz, NotFound<RouteError>> {
+fn get_quiz(quiz_id: i32, conn: &diesel::MysqlConnection) -> Result<Quiz, NotFound<RouteError>> {
     use crate::schema::quiz::dsl::quiz as quiz_table;
     quiz_table
         .find(quiz_id)
@@ -31,7 +28,7 @@ pub fn get_quiz(
         .map_err(|msg| NotFound(msg.into()))
 }
 
-pub fn get_questions(
+fn get_questions(
     quiz_id: i32,
     conn: &diesel::MysqlConnection,
 ) -> Result<Vec<Question>, NotFound<RouteError>> {
@@ -42,7 +39,7 @@ pub fn get_questions(
         .map_err(|msg| NotFound(msg.into()))
 }
 
-pub fn get_answers(
+fn get_answers(
     questions: &Vec<Question>,
     conn: &diesel::MysqlConnection,
 ) -> Result<Vec<Vec<Answer>>, NotFound<RouteError>> {
@@ -58,7 +55,7 @@ pub fn get_answers(
     Ok(answers)
 }
 
-pub fn get_results(
+fn get_results(
     quiz_id: i32,
     conn: &diesel::MysqlConnection,
 ) -> Result<Vec<QuizResult>, NotFound<RouteError>> {
