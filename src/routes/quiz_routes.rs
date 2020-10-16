@@ -34,13 +34,15 @@ pub fn search(query: String, conn_ptr: DbConn) -> Result<Json<Vec<Quiz>>, NotFou
     let ref conn = *conn_ptr;
     let sql_query_string = query.replace(" ", "*");
     let sql_query_string = String::from("*") + &sql_query_string + "*";
-    diesel::sql_query(
+    let res: Result<Json<Vec<Quiz>>, NotFound<RouteError>> = diesel::sql_query(
         "SELECT * from quiz where match(name, description) against (? in boolean mode)",
     )
     .bind::<diesel::sql_types::Text, _>(sql_query_string)
     .load(conn)
     .map_err(|e| NotFound(e.into()))
-    .map(|val| Json(val))
+    .map(|val| Json(val));
+    dbg!(res.as_ref().unwrap());
+    res
 }
 
 #[get("/quizzes?<user_id>")]

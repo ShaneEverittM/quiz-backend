@@ -23,6 +23,6 @@ extern crate serde_derive; // to be able to derive
 pub struct DbConn(diesel::MysqlConnection);
 
 pub mod models;
-pub mod routing;
+pub mod routes;
 pub mod schema;
 pub mod utils;
