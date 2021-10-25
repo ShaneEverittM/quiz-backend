@@ -19,9 +19,10 @@ fn make_cors() -> rocket_cors::Cors {
         allow_credentials: true,
         ..Default::default()
     }
-    .to_cors()
-    .unwrap()
+        .to_cors()
+        .unwrap()
 }
+
 fn rocket() -> rocket::Rocket {
     rocket::ignite()
         .mount(
@@ -43,6 +44,7 @@ fn rocket() -> rocket::Rocket {
         .attach(quizzes_backend::DbConn::fairing())
         .attach(make_cors())
 }
+
 fn main() {
     rocket().launch();
 }

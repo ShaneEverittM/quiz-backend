@@ -58,7 +58,7 @@ pub fn get_quizzes_by_user_id(
     Ok(Json(quizzes))
 }
 
-// This route handles retrieval of all of the constituant parts of a quiz from their
+// This route handles retrieval of all of the constituent parts of a quiz from their
 // tables and assembles them into a large struct and sends it as JSON.
 #[get("/quiz/<quiz_id>")]
 pub fn get_full_quiz_route(

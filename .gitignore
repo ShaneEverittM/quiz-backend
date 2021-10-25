@@ -1,4 +1,5 @@
 /target
 .vscode
 quizzes_db.session.sql
+.idea/
 
